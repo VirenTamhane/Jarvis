@@ -3,12 +3,17 @@ from time import ctime
 import playsound
 import os
 import random
+
+import winshell as winshell
 from gtts import gTTS
 import webbrowser
 import psutil
 import requests
 import win32api
 import cv2
+import subprocess
+import wikipedia
+import pyjokes
 
 raw = sr.Recognizer()
 
@@ -46,7 +51,7 @@ def bot_speak(audio_string):
 
 
 def respond(voice_data):
-    global path
+    global path, error
     a = {'hello': 'hi', 'hi': 'hello', 'how are you': 'I\'m fine ', 'What is your name': 'Alexa'}
     if voice_data in a:
         bot_speak(a[voice_data])  # value of key is printed
@@ -131,9 +136,9 @@ def respond(voice_data):
         cam = cv2.VideoCapture(0)
         capture_success = 0
         while capture_success == 0:
-            ret, img = cam.read()
+            ret, frame = cam.read()
             bot_speak("Camera Opened")
-            cv2.imshow("CAMERA", img)
+            cv2.imshow("CAMERA", frame)
             task = record_audio()
             if capture_success == 1:
                 break
@@ -150,9 +155,40 @@ def respond(voice_data):
                 file = record_audio("What is you file name")
                 file = file.lower()
                 file = 'E:/Python/' + file + '.jpg'
-                cv2.imwrite(file, img)
+                cv2.imwrite(file, frame)
                 bot_speak("Capture Successful")
                 capture_success = 1
+
+    if 'restart' in voice_data:
+        bot_speak('Restarting your laptop')
+        subprocess.call(["shutdown", "/r"])
+
+    if 'wikipedia' in voice_data:
+        search_var = record_audio("What Would You Like To Search On Wikipedia")
+        bot_speak(wikipedia.summary(search_var,1))
+        webbrowser.get().open(wikipedia.page(search_var).url)
+
+    if 'joke' in voice_data:
+        bot_speak(pyjokes.get_joke())
+
+    if 'news' in voice_data:
+        webbrowser.open('https://theprint.in/')
+        bot_speak("Here Is Some News For You")
+
+    if 'empty recycle bin' in voice_data:
+        error = "None"
+        try:
+            error = winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
+            if error == "None":
+                bot_speak("Recycle Bin Recycled")
+        except:
+                error = "Raju"
+                bot_speak("Bin Is Empty")
+
+    if 'google' in voice_data:
+        ser = record_audio('What do you want to open')
+        ser = str(ser.lower()) + '.com'
+        webbrowser.open(ser)
 
     if 'exit' in voice_data:
         exit()
@@ -160,6 +196,6 @@ def respond(voice_data):
 
 bot_speak("Listening")
 while 1:
-    voice_data = record_audio()
+    voice_data = 'google'#record_audio()
     print(voice_data)
     respond(voice_data)
