@@ -1,10 +1,9 @@
 import speech_recognition as sr
-from time import ctime
+from datetime import datetime
 import playsound
 import os
 import random
-
-import winshell as winshell
+import winshell
 from gtts import gTTS
 import webbrowser
 import psutil
@@ -17,14 +16,12 @@ import pyjokes
 
 raw = sr.Recognizer()
 
-
 def record_audio(ask=False):
     with sr.Microphone() as source:  # source is a variable in which user speech is stored
         if ask:
             bot_speak(ask)
 
-        raw.adjust_for_ambient_noise(
-            source)
+        raw.adjust_for_ambient_noise(source)
         audio = raw.listen(source)
 
         try:
@@ -51,15 +48,16 @@ def bot_speak(audio_string):
 
 
 def respond(voice_data):
-    global path, error
-    a = {'hello': 'hi', 'hi': 'hello', 'how are you': 'I\'m fine ', 'What is your name': 'Alexa'}
-    if voice_data in a:
-        bot_speak(a[voice_data])  # value of key is printed
+
+    salutation = {'hello': 'HI', 'hi': 'HELLO', 'how are you': 'I\'m fine ', 'what is your name': 'ALEXA'}
+    if voice_data in salutation:
+        bot_speak(salutation[voice_data])
 
     if 'what' and 'time' in voice_data:
-        bot_speak(ctime())
+        now = datetime.now()
+        bot_speak(now.strftime('%I:%M %p'))
 
-    if 'search' in voice_data:
+    if 'search' and ('web' or 'internet') in voice_data:
         search = record_audio("What do you want to search")
         url = 'https://google.com/search?q=' + search
         webbrowser.get().open(url)
@@ -108,7 +106,7 @@ def respond(voice_data):
         os.system("powershell -command ./bluetooth.ps1 -BluetoothStatus Off")
         bot_speak('Bluetooth disabled.')
 
-    if 'open' in voice_data:
+    if 'open' and 'file' in voice_data:
         extensions = {'python': '.py', 'text': '.txt', 'executable': '.exe', 'java': '.java', 'image': '.jpg'}
         flag = 0
         drives = win32api.GetLogicalDriveStrings()
@@ -132,7 +130,7 @@ def respond(voice_data):
         if flag == 0:
             bot_speak("File Not Found At: " + path)
 
-    if 'camera' in voice_data:
+    if 'open' and 'camera' in voice_data:
         cam = cv2.VideoCapture(0)
         capture_success = 0
         while capture_success == 0:
@@ -164,38 +162,43 @@ def respond(voice_data):
         subprocess.call(["shutdown", "/r"])
 
     if 'wikipedia' in voice_data:
-        search_var = record_audio("What Would You Like To Search On Wikipedia")
-        bot_speak(wikipedia.summary(search_var,1))
+        search_var = record_audio("WHICH ARTICLE WOULD YOU LIKE TO OPEN ON WIKIPEDIA")
+        bot_speak("OPENING WIKIPEDIA FOR ")
+        bot_speak(search_var)
         webbrowser.get().open(wikipedia.page(search_var).url)
+        bot_speak("HERE IS A SUMMARY FOR YOU")
+        bot_speak(wikipedia.summary(search_var,1))
 
     if 'joke' in voice_data:
+        bot_speak("HERE ARE SOME JOKES FOR YOU")
         bot_speak(pyjokes.get_joke())
 
     if 'news' in voice_data:
         webbrowser.open('https://theprint.in/')
-        bot_speak("Here Is Some News For You")
+        bot_speak("HERE IS SOME NEWS FOR YOU")
 
     if 'empty recycle bin' in voice_data:
-        error = "None"
         try:
-            error = winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
-            if error == "None":
-                bot_speak("Recycle Bin Recycled")
+            winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
+            bot_speak("RECYCLE BIN EMPTIED")
         except:
-                error = "Raju"
-                bot_speak("Bin Is Empty")
+            bot_speak("RECYCLE BIN IS EMPTY")
 
-    if 'google' in voice_data:
-        ser = record_audio('What do you want to open')
+    if 'open' and 'website' in voice_data:
+        ser = record_audio('WHAT WEBSITE DO YOU WANT TO OPEN')
         ser = str(ser.lower()) + '.com'
         webbrowser.open(ser)
+
+    if 'open' and 'mail' in voice_data:
+        bot_speak("OPENING MAIL")
+        webbrowser.open("www.gmail.com")
 
     if 'exit' in voice_data:
         exit()
 
-
-bot_speak("Listening")
 while 1:
-    voice_data = 'google'#record_audio()
+    bot_speak("Listening")
+    voice_data = record_audio()
+    voice_data = voice_data.lower()
     print(voice_data)
     respond(voice_data)
